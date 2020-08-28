@@ -21,6 +21,26 @@ def thread_it(func, *args):
   # 启动线程
   t.start()
 
+#全选函数
+def selectall(editor, event=None):
+    editor.event_generate("<<SelectAll>>")
+
+#复制函数
+def copy(editor, event=None):
+    editor.event_generate("<<Copy>>")
+
+#粘贴函数
+def paste(editor, event=None):
+    editor.event_generate('<<Paste>>')
+
+#右键函数
+def rightKey(event, editor):
+    menubar.delete(0,'end')
+    menubar.add_command(label='全选',command=lambda:selectall(editor))
+    menubar.add_command(label='复制',command=lambda:copy(editor))
+    menubar.add_command(label='粘贴',command=lambda:paste(editor))
+    menubar.post(event.x_root,event.y_root)
+
 #爬取并保存图片函数
 def downloadJPG(jpgfolder, url, rule):
     headers = {
@@ -34,10 +54,11 @@ def downloadJPG(jpgfolder, url, rule):
     if not pdfFile:
         pdfFile = jpgfolder + "contract.pdf"
     else:
-        print(pdfFile)
         folder_name = re.split(r'\s*[;,，\s]\s*',pdfFile)[0]
-        os.mkdir(jpgfolder + folder_name)
+        if not os.path.exists(jpgfolder + folder_name):
+            os.mkdir(jpgfolder + folder_name)
         pdfFile = jpgfolder + folder_name +"/" + folder_name + ".pdf"
+        jpgfolder = jpgfolder + folder_name + "/"
     if  not len(src_list):
         messagebox.showinfo(message="爬取失败，请更换规则重试")
         return
@@ -101,7 +122,8 @@ def start_crawing(object):
     else:
         rule = var_craw_rule3.get()
     if rule == '':
-        messagebox.showwarning(message="爬取规则不能为空！！")
+        messagebox.showwarning(message="爬取规则不能为空")
+        enable_widget(object)
         return
     downloadJPG(jpgfolder, url, rule)
     enable_widget(object)
@@ -131,16 +153,17 @@ if __name__ == "__main__":
 
     ttk.Label(window, text='保存位置').place(x=25, y=20)
     ttk.Label(window, text='链接地址').place(x=25, y=70)
-
+    menubar = tk.Menu(window,tearoff=False)#创建一个菜单
 
     var_folder_name = tk.StringVar()
     var_folder_name.set('D:')
-    entry_folder_name = ttk.Entry(window, width=40,textvariable=var_folder_name)
+    entry_folder_name = ttk.Entry(window, width=40,textvariable=var_folder_name, state = 'disable')
     entry_folder_name.place(x=95, y=20)
     var_link_add = tk.StringVar()
     var_link_add.set('https://mp.weixin.qq.com/s/6IleHJNr8wxGGQAi4aAtbg')
     entry_link_add = ttk.Entry(window, width=48, textvariable=var_link_add)
     entry_link_add.place(x=95, y=70)
+    entry_link_add.bind("<Button-3>", lambda x: rightKey(x, entry_link_add))#绑定右键鼠标事件
 
     frm1 = tk.Frame(window, height=145, width=434,bd=1,relief='sunken').place(x=8,y=110)
 
@@ -166,6 +189,7 @@ if __name__ == "__main__":
     var_craw_rule3 = tk.StringVar()
     entry_craw_rule3 = ttk.Entry(frm1, width=48, textvariable=var_craw_rule3, state = 'disable')
     entry_craw_rule3.place(x=95, y=220)
+    entry_craw_rule3.bind("<Button-3>", lambda x: rightKey(x, entry_craw_rule3) if entry_craw_rule3['state'] == 'enable' else None)#绑定右键鼠标事件
 
     btn_browse = ttk.Button(window, text='浏览', width=6, command=open_folder)
     btn_browse.place(x=385, y=18)
